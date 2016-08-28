@@ -52,7 +52,7 @@ RF24Mesh mesh(radio,network);
 RF24Gateway gw(radio,network,mesh);
 
 uint8_t nodeID = 0;
-int interruptPin = 24;
+int interruptPin = 23;
 /******************************************************************/
 
 WINDOW * win;
@@ -122,7 +122,12 @@ int main() {
   curs_set(0);   
   init_pair(1, COLOR_GREEN, COLOR_BLACK);
   init_pair(2, COLOR_RED, COLOR_BLACK);
-  
+  init_pair(3, COLOR_BLUE, COLOR_BLACK);
+  init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
+  init_pair(5, COLOR_YELLOW, COLOR_BLACK);
+  init_pair(6, COLOR_CYAN, COLOR_BLACK);
+
+
   /** Setup Pads**/
   /*******************************/
   devPad = newpad(11,40);  
@@ -138,45 +143,44 @@ int main() {
   timeout(0);
   
 
-  //MANUAL IP
-  //char ip[] = "10.10.3.1";
-  //char subnet[] = "255.255.255.0";
-  //gw.setIP(ip,subnet);
+	// MANUAL IP
+	//char ip[] = "10.10.3.1";
+	//char subnet[] = "255.255.255.0";
+	//gw.setIP(ip,subnet);
 
-  drawMain();
+	drawMain();
   
-  radio.maskIRQ(1,1,0);
-  attachInterrupt(interruptPin, INT_EDGE_FALLING, intHandler);
-  
-/******************************************************************/ 
-/***********************LOOP***************************************/  
-bool ok = true;
+	radio.maskIRQ(1,1,0);
+	attachInterrupt(interruptPin, INT_EDGE_FALLING, intHandler);
 
- while(1){
-	
-  
-    
-  if(millis()-mesh_timer > 30000 && mesh.getNodeID()){ //Every 30 seconds, test mesh connectivity
-    if( ! mesh.checkConnection() ){
-        wclear(renewPad);
-        mvwprintw(renewPad,0,0,"*Renewing Address*");
-        prefresh(renewPad,0,0, 3,26, 4, 55);
-        radio.maskIRQ(1,1,1); //Use polling only for address renewal       
-        if( (ok = mesh.renewAddress()) ){
-            wclear(renewPad);
-            prefresh(renewPad,0,0, 3,26, 4, 55);
-        }
-        radio.maskIRQ(1,1,0);
-     }
-     mesh_timer = millis();
-  }
-	/**
-	* The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
-	* RF24Network user payloads are loaded into the user cache		
-	*/
-    gw.poll(10);
-    
-  if(ok){ //Non-master nodes need an active connection to the mesh in order to handle data
+	/******************************************************************/
+	/***********************LOOP***************************************/
+	bool ok = true;
+
+	while(1){
+		// test mesh connectivity every 30 seconds
+		if(millis()-mesh_timer > 30000 && mesh.getNodeID()){
+			if( ! mesh.checkConnection() ){
+				wclear(renewPad);
+				mvwprintw(renewPad,0,0,"*Renewing Address*");
+				prefresh(renewPad,0,0, 3,26, 4, 55);
+				radio.maskIRQ(1,1,1); //Use polling only for address renewal       
+				if( (ok = mesh.renewAddress()) ){
+					wclear(renewPad);
+					prefresh(renewPad,0,0, 3,26, 4, 55);
+				}
+				radio.maskIRQ(1,1,0);
+			}
+		mesh_timer = millis();
+		}
+		/**
+		* The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
+		* RF24Network user payloads are loaded into the user cache		
+		*/
+		gw.poll(10);
+
+		//Non-master nodes need an active connection to the mesh in order to handle data
+		if(ok){
 
   
   /** Read RF24Network Payloads (Do nothing with them currently) **/
