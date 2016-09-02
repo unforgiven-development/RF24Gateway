@@ -1,23 +1,21 @@
-
-
-/**
-* RF24Gateway NCurses interface - TMRh20 2015
-* This is a generic tool for nodes supporting or combining with RF24Ethernet and/or RF24Network.
-* 
-* The tool provides a simple interface for monitoring information and activity regarding the RF24Gateway: <br>
-* a: Interface statistics from /proc/net/dev <br>
-* b: RF24Mesh address/id assignments <br>
-* c: RF24Network/Radio information <br>
-* d: Active IP connections (optional) <br>
-*
-* **Requirements: NCurses** 
-* Install NCurses: apt-get install libncurses5-dev
-*
-* **Controls**
-* Type 'h' to view the help menu
-*
-*
-*/
+/*
+ * RF24Gateway NCurses interface - TMRh20 2015
+ * This is a generic tool for nodes supporting or combining with RF24Ethernet and/or RF24Network.
+ *
+ * The tool provides a simple interface for monitoring information and activity regarding the RF24Gateway: <br>
+ * a: Interface statistics from /proc/net/dev <br>
+ * b: RF24Mesh address/id assignments <br>
+ * c: RF24Network/Radio information <br>
+ * d: Active IP connections (optional) <br>
+ *
+ * **Requirements: NCurses** 
+ * Install NCurses: apt-get install libncurses5-dev
+ *
+ * **Controls**
+ * Type 'h' to view the help menu
+ *
+ *
+ */
 
 #include <RF24/RF24.h>
 #include <RF24Network/RF24Network.h>
@@ -44,8 +42,9 @@
 
 #include <time.h>
 
-/******************************************************************/
-//User Configuration
+/******************************************************************************/
+/* User Configuration                                                         */
+/******************************************************************************/
 RF24 radio(22,0);
 RF24Network network(radio);
 RF24Mesh mesh(radio,network);
@@ -53,7 +52,7 @@ RF24Gateway gw(radio,network,mesh);
 
 uint8_t nodeID = 0;
 int interruptPin = 23;
-/******************************************************************/
+/******************************************************************************/
 
 WINDOW * win;
 WINDOW * meshPad;
@@ -63,85 +62,86 @@ WINDOW * rf24Pad;
 WINDOW * cfgPad;
 WINDOW * renewPad;
 
- void drawMain(void);
- void drawHelp(void);
- void drawCfg(bool isConf);
- 
- void drawDevPad(void);
- void drawMeshPad(void);
- void drawConnPad(void);
- void drawRF24Pad(void);
-  
- int maxX,maxY;
- int padSelection = 0;
- int meshScroll = 0;
- int connScroll = 0;
- int rf24Scroll = 0;
- unsigned long updateRate = 1000;
-  
- uint32_t meshInfoTimer = 0;
- uint32_t fifoTimer;
- uint32_t fifoClears;
- uint32_t mesh_timer = 0;
- size_t networkPacketsRX = 0;
- std::string subIP;
- std::string tunStr ("tun_nrf24");
- bool showConnPad;
+void drawMain(void);
+void drawHelp(void);
+void drawCfg(bool isConf);
 
- size_t bRX;
- size_t bTX;
+void drawDevPad(void);
+void drawMeshPad(void);
+void drawConnPad(void);
+void drawRF24Pad(void);
 
- 
-/******************************************************************/ 
-/***********************MAIN***************************************/  	
-void intHandler(){
-    gw.update(true);
+int maxX,maxY;
+int padSelection = 0;
+int meshScroll = 0;
+int connScroll = 0;
+int rf24Scroll = 0;
+unsigned long updateRate = 1000;
+
+uint32_t meshInfoTimer = 0;
+uint32_t fifoTimer;
+uint32_t fifoClears;
+uint32_t mesh_timer = 0;
+size_t networkPacketsRX = 0;
+std::string subIP;
+std::string tunStr ("tun_nrf24");
+bool showConnPad;
+
+size_t bRX;
+size_t bTX;
+
+
+/******************************************************************************/
+/*                                    MAIN                                    */
+/******************************************************************************/
+void intHandler() {
+	gw.update(true);
 }
 
 
-int main() {	
-  
-  gw.begin(nodeID);
-  //mesh.setStaticAddress(8,1);
+int main() {
+	gw.begin(nodeID);
+	//mesh.setStaticAddress(8,1);
 
-  //uint8_t nodeID = 22;
-  //gw.begin(nodeID,3,RF24_2MBPS);
-  
-  //uint16_t address = 0;
-  //gw.begin(address,3,RF24_2MBPS);
-  
-  /** Setup NCurses**/
-  /*******************************/ 
-  win = initscr();
-  cbreak(); 
-  noecho();
-  getmaxyx(win,maxX,maxY);
-  
-  keypad(win, TRUE);
-  start_color();
-  curs_set(0);   
-  init_pair(1, COLOR_GREEN, COLOR_BLACK);
-  init_pair(2, COLOR_RED, COLOR_BLACK);
-  init_pair(3, COLOR_BLUE, COLOR_BLACK);
-  init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
-  init_pair(5, COLOR_YELLOW, COLOR_BLACK);
-  init_pair(6, COLOR_CYAN, COLOR_BLACK);
+	//uint8_t nodeID = 22;
+	//gw.begin(nodeID,3,RF24_2MBPS);
 
+	//uint16_t address = 0;
+	//gw.begin(address,3,RF24_2MBPS);
 
-  /** Setup Pads**/
-  /*******************************/
-  devPad = newpad(11,40);  
-  meshPad = newpad(11,50);  
-  rf24Pad = newpad(11,40);  
-  connPad = newpad(21,150);
-  cfgPad = newpad(10,40);
-  renewPad = newpad(1,35);
-  
-  scrollok(meshPad,true);
-  scrollok(connPad,true);
-  scrollok(rf24Pad,true);
-  timeout(0);
-  
+	/*****************/
+	/* Setup ncurses */
+	/*****************/
+	win = initscr();
+	cbreak();
+	noecho();
+	getmaxyx(win,maxX,maxY);
+
+	keypad(win, TRUE);
+	start_color();
+	curs_set(0);
+	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_BLUE, COLOR_BLACK);
+	init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(5, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(6, COLOR_CYAN, COLOR_BLACK);
+
+	/**************/
+	/* Setup pads */
+	/**************/
+	devPad = newpad(11,40);
+	meshPad = newpad(11,50);
+	rf24Pad = newpad(11,40);
+	connPad = newpad(21,150);
+	cfgPad = newpad(10,40);
+	renewPad = newpad(1,35);
+
+	scrollok(meshPad,true);
+	scrollok(connPad,true);
+	scrollok(rf24Pad,true);
+	timeout(0);
+
 
 	// MANUAL IP
 	//char ip[] = "10.10.3.1";
@@ -149,7 +149,7 @@ int main() {
 	//gw.setIP(ip,subnet);
 
 	drawMain();
-  
+
 	radio.maskIRQ(1,1,0);
 	attachInterrupt(interruptPin, INT_EDGE_FALLING, intHandler);
 
@@ -157,15 +157,15 @@ int main() {
 	/***********************LOOP***************************************/
 	bool ok = true;
 
-	while(1){
+	while(1) {
 		// test mesh connectivity every 30 seconds
-		if(millis()-mesh_timer > 30000 && mesh.getNodeID()){
-			if( ! mesh.checkConnection() ){
+		if(millis()-mesh_timer > 30000 && mesh.getNodeID()) {
+			if( ! mesh.checkConnection() ) {
 				wclear(renewPad);
 				mvwprintw(renewPad,0,0,"*Renewing Address*");
 				prefresh(renewPad,0,0, 3,26, 4, 55);
 				radio.maskIRQ(1,1,1); //Use polling only for address renewal       
-				if( (ok = mesh.renewAddress()) ){
+				if( (ok = mesh.renewAddress()) ) {
 					wclear(renewPad);
 					prefresh(renewPad,0,0, 3,26, 4, 55);
 				}
@@ -173,34 +173,33 @@ int main() {
 			}
 		mesh_timer = millis();
 		}
-		/**
-		* The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
-		* RF24Network user payloads are loaded into the user cache		
-		*/
+		/*
+		 * The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
+		 * RF24Network user payloads are loaded into the user cache		
+		 */
 		gw.poll(10);
 
-		//Non-master nodes need an active connection to the mesh in order to handle data
-		if(ok){
+		// Non-master nodes need an active connection to the mesh in order to handle data
+		if(ok) {
+			/**************************************************************/
+			/* Read RF24Network Payloads (do nothing with them currently) */
+			/**************************************************************/
+			rfNoInterrupts();
+			if( network.available() ) {
+				++networkPacketsRX;
+				RF24NetworkHeader header;
+				size_t size = network.peek(header);
+				uint8_t buf[size];
 
-  
-  /** Read RF24Network Payloads (Do nothing with them currently) **/
-  /*******************************/
-    rfNoInterrupts();
-    if( network.available() ){
-	  ++networkPacketsRX;
-	  RF24NetworkHeader header;
-	  size_t size = network.peek(header);
-	  uint8_t buf[size];
+				if(header.type == 1) {
+					struct timeStruct{
+						uint8_t hr;
+						uint8_t min;
+					}myTime;
 
-      if(header.type == 1){
-	    struct timeStruct{
-	     uint8_t hr;
-	     uint8_t min;
-	    }myTime;
-
-	    time_t mTime;
-	    time(&mTime);
-	    struct tm* tm = localtime(&mTime);
+					time_t mTime;
+					time(&mTime);
+					struct tm* tm = localtime(&mTime);
 
         myTime.hr = tm->tm_hour;
         myTime.min = tm->tm_min;
@@ -342,38 +341,40 @@ refresh();
 
 /******************************************************************/
 
-void drawHelp(){
-   
-   drawMain();
-   
-   attron(COLOR_PAIR(1));   
-   mvwprintw(win, 4,1,"**RF24Gateway NCurses Help Menu**");
-   wprintw(win," Controls:\n");
-   wprintw(win," ARROW_UP/DOWN: Scroll up/down in supported menus\n");
-   wprintw(win," ARROW_LEFT/RIGHT: Scroll between supported menus\n");
-   wprintw(win," 'c' key: Open IP configuration menu\n");
-   wprintw(win," 'w' key: Increase frame-rate of display\n");
-   wprintw(win," 's' key: Decrease frame-rate of display\n");
-   wprintw(win," 'a' key: Display active IP connections\n");
-   wprintw(win," 'h' key: Display this menu\n");
-   
-   timeout(30000);
-   getch();
-   timeout(0);
-   
-   drawMain();
-   
+void drawHelp() {
+
+	drawMain();
+
+	attron(COLOR_PAIR(1));
+	mvwprintw(win, 4,1,"**RF24Gateway NCurses Help Menu**");
+	wprintw(win," Controls:\n");
+	wprintw(win," ARROW_UP/DOWN: Scroll up/down in supported menus\n");
+	wprintw(win," ARROW_LEFT/RIGHT: Scroll between supported menus\n");
+	wprintw(win," 'c' key: Open IP configuration menu\n");
+	wprintw(win," 'w' key: Increase frame-rate of display\n");
+	wprintw(win," 's' key: Decrease frame-rate of display\n");
+	wprintw(win," 'a' key: Display active IP connections\n");
+	wprintw(win," 'h' key: Display this menu\n");
+
+	timeout(30000);
+	getch();
+	timeout(0);
+
+	drawMain();
+
 }
 
 /******************************************************************/
 
-void drawCfg(bool isConf){
+void drawCfg(bool isConf) {
 
-	if(isConf){drawMain();}
+	if(isConf) {
+		drawMain();
+	}
 	nocbreak();
 	echo();
 	timeout(30000);
-	
+
 	sleep(1);
 	wattron(win,COLOR_PAIR(1));
 	mvwprintw(win,5,1, isConf ? "IP Configuration\n" : "**Interface Not Configured:**\n");
@@ -389,19 +390,19 @@ void drawCfg(bool isConf){
 	
 	mvgetstr(7,20,mask);
 	
-	if(strlen(ip) >= 6 && strlen(mask) >= 7){
-	  gw.setIP(ip,mask);
-	}else{
-	  mvwprintw(win,8,1,"Unable to set IP/Subnet \n");
-	  refresh();
-	  sleep(3);
+	if(strlen(ip) >= 6 && strlen(mask) >= 7) {
+		gw.setIP(ip,mask);
+	} else {
+		mvwprintw(win,8,1,"Unable to set IP/Subnet \n");
+		refresh();
+		sleep(3);
 	}
 
 	timeout(0);
-    cbreak();
+	cbreak();
 	noecho();
 
-    drawMain();
+	drawMain();
 }
 
 
@@ -452,28 +453,26 @@ void drawDevPad() {
 
 /******************************************************************/
 
-void drawMeshPad(){
+void drawMeshPad() {
 
-	 wclear(meshPad);	 
-	 
-     meshInfoTimer = millis();
-	 //uint8_t pos=5;
-     for(int i=0; i<mesh.addrListTop; i++){
-	   mvwprintw(meshPad,i+1,0," Address: 0%o ID: %d \n",mesh.addrList[i].address,mesh.addrList[i].nodeID);
-	 }
+	wclear(meshPad);
 
-	 if(padSelection == 0){
-	   wattron(meshPad,COLOR_PAIR(1));
-	   mvwhline(meshPad,meshScroll,0,ACS_HLINE, maxY);
-	   wattroff(meshPad,COLOR_PAIR(1));
-	   mvwprintw(meshPad,meshScroll,3," Mesh Info: ");
-	 }else{
-	   wattroff(meshPad,COLOR_PAIR(1));
-	   mvwhline(meshPad,meshScroll,0,ACS_HLINE, maxY);
-	   mvwprintw(meshPad,meshScroll,3," Mesh Info: ");
-	   
-	 }
-	 
+	meshInfoTimer = millis();
+	//uint8_t pos=5;
+	for(int i=0; i<mesh.addrListTop; i++) {
+		mvwprintw(meshPad,i+1,0," Address: 0%o ID: %d \n",mesh.addrList[i].address,mesh.addrList[i].nodeID);
+	}
+
+	if(padSelection == 0) {
+		wattron(meshPad,COLOR_PAIR(1));
+		mvwhline(meshPad,meshScroll,0,ACS_HLINE, maxY);
+		wattroff(meshPad,COLOR_PAIR(1));
+		mvwprintw(meshPad,meshScroll,3," Mesh Info: ");
+	} else {
+		wattroff(meshPad,COLOR_PAIR(1));
+		mvwhline(meshPad,meshScroll,0,ACS_HLINE, maxY);
+		mvwprintw(meshPad,meshScroll,3," Mesh Info: ");
+	}
 }
 
 /******************************************************************/
