@@ -1,5 +1,4 @@
-
-
+// RF24Gateway.cpp //
 
 #include "RF24Gateway.h"
 #include "RF24Mesh/RF24Mesh_config.h"
@@ -14,107 +13,108 @@ RF24Gateway::RF24Gateway(RF24& _radio,RF24Network& _network, RF24Mesh& _mesh):
 /***************************************************************************************/
 
 void RF24Gateway::begin(uint8_t nodeID, uint8_t _channel, rf24_datarate_e data_rate) {
-
-    mesh_enabled = true;	  
+    mesh_enabled = true;
 	begin(true, mesh_enabled, 0, nodeID, data_rate, _channel);
 }
 
 /***************************************************************************************/
 
 void RF24Gateway::begin(uint16_t address, uint8_t _channel, rf24_datarate_e data_rate, bool meshEnable, uint8_t nodeID) {
-		 
 	begin(0, mesh_enabled, address, nodeID, data_rate, _channel);
 }
 
 /***************************************************************************************/
 
 bool RF24Gateway::begin(bool configTUN, bool meshEnable, uint16_t address, uint8_t mesh_nodeID, rf24_datarate_e data_rate, uint8_t _channel) {
-
-    #if(DEBUG>=1)
+	/* DEBUG */
+	#if(DEBUG>=1)
 		printf("GW Begin\n");
 		printf("Config Device address 0%o nodeID %d\n",address,mesh_nodeID);
 	#endif
+
 	config_TUN = configTUN;
-	
+
 	///FIX
-	
-	channel = _channel;//97;
-	
+
+	channel = _channel;	//97;
+
 	dataRate = data_rate;
-	
+
 	configDevice(address);
-    mesh_enabled = meshEnable;
+	mesh_enabled = meshEnable;
 	thisNodeID = mesh_nodeID;
 	thisNodeAddress = address;
 
-    if(meshEnable){
-      // GW radio channel setting takes precedence over mesh_default_channel
-	  if(channel == 97 && MESH_DEFAULT_CHANNEL != 97){
-	    channel = MESH_DEFAULT_CHANNEL;
-	  }
-	
-	  if(!thisNodeAddress && !mesh_nodeID){	  
-	     mesh.setNodeID(0);
-	  }else{
-		if(!mesh_nodeID){
-			mesh_nodeID = 253;
+	if(meshEnable) {
+		// GW radio channel setting takes precedence over mesh_default_channel
+		if(channel == 97 && MESH_DEFAULT_CHANNEL != 97) {
+			channel = MESH_DEFAULT_CHANNEL;
 		}
-		mesh.setNodeID(mesh_nodeID); //Try not to conflict with any low-numbered node-ids
-	  }
-	  mesh.begin(channel,data_rate);
-	  thisNodeAddress = mesh.mesh_address;
-	}else{
-	  radio.begin();
-      delay(5);
-      const uint16_t this_node = address;
-	  radio.setDataRate(dataRate);
-	  radio.setChannel(channel);
-	  
-      network.begin(/*node address*/ this_node);
-	  thisNodeAddress = this_node;
-	  
-	}
-	network.multicastRelay=1;
 
+		if(!thisNodeAddress && !mesh_nodeID) {
+			mesh.setNodeID(0);
+		} else {
+			if(!mesh_nodeID) {
+				mesh_nodeID = 253;
+			}
+			mesh.setNodeID(mesh_nodeID); // Try not to conflict with any low-numbered node-ids
+		}
+		mesh.begin(channel,data_rate);
+		thisNodeAddress = mesh.mesh_address;
+	} else {
+		radio.begin();
+		delay(5);
+		const uint16_t this_node = address;
+		radio.setDataRate(dataRate);
+		radio.setChannel(channel);
+
+		network.begin(/*node address*/ this_node);
+		thisNodeAddress = this_node;
+	}
+
+	network.multicastRelay=1;
 
     //#if (DEBUG >= 1)
         radio.printDetails();
     //#endif
-    
+
     setupSocket();
-	
+
 	return true;
 }
 
 /***************************************************************************************/
 
-bool RF24Gateway::meshEnabled(){
-  return mesh_enabled;
+bool RF24Gateway::meshEnabled() {
+	return mesh_enabled;
 }
 
 /***************************************************************************************/
 
-int RF24Gateway::configDevice(uint16_t address){
+int RF24Gateway::configDevice(uint16_t address) {
 
-    std::string tunTapDevice = "tun_nrf24";
-    strcpy(tunName, tunTapDevice.c_str());
+	std::string tunTapDevice = "tun_nrf24";
+	strcpy(tunName, tunTapDevice.c_str());
 
 	int flags;
-	if(config_TUN){
-      flags = IFF_TUN | IFF_NO_PI | IFF_MULTI_QUEUE;
-	}else{
-	  flags = IFF_TAP | IFF_NO_PI | IFF_MULTI_QUEUE;
-    }
+
+	if(config_TUN) {
+		flags = IFF_TUN | IFF_NO_PI | IFF_MULTI_QUEUE;
+	} else {
+		flags = IFF_TAP | IFF_NO_PI | IFF_MULTI_QUEUE;
+	}
+
 	tunFd = allocateTunDevice(tunName, flags, address);
+
 	#if DEBUG >= 1
-    if (tunFd >= 0) {
+	if (tunFd >= 0) {
 		std::cout << "RF24Gw: Successfully attached to tun/tap device " << tunTapDevice << std::endl;
-    } else {
-        std::cerr << "RF24Gw: Error allocating tun/tap interface: " << tunFd << std::endl;
-        exit(1);
-    }
+	} else {
+		std::cerr << "RF24Gw: Error allocating tun/tap interface: " << tunFd << std::endl;
+		exit(1);
+	}
 	#endif
-    return tunFd;
+	return tunFd;
 }
 
 /***************************************************************************************/
@@ -520,49 +520,46 @@ void printPayload(std::string buffer, std::string debugMsg = "") {
 
 void printPayload(char *buffer, int nread, std::string debugMsg = "") {
 
-
-}
-
-/***************************************************************************************/
-   
-void RF24Gateway::setupSocket(){
-    
-  int ret;
-  const char* myAddr = "127.0.0.1";
-  
-  addr.sin_family = AF_INET;
-  ret = inet_aton(myAddr, &addr.sin_addr);
-  if (ret == 0) { perror("inet_aton"); exit(1); }
-  addr.sin_port = htons(32001);
-  //buf = "Hello UDP";
-  s = socket(PF_INET, SOCK_DGRAM, 0);
-  if (s == -1) { perror("socket"); exit(1); }
 }
 
 /***************************************************************************************/
 
-void RF24Gateway::sendUDP(uint8_t nodeID,RF24NetworkFrame frame){
-    
-  uint8_t buffer[MAX_PAYLOAD_SIZE+11];
-  
-  memcpy(&buffer[0], &nodeID,1);
-  memcpy(&buffer[1],&frame.header,8);
-  memcpy(&buffer[9],&frame.message_size,2);
-  memcpy(&buffer[11],&frame.message_buffer,frame.message_size);
+void RF24Gateway::setupSocket() {
 
-  int ret = sendto(s, &buffer, frame.message_size+11, 0, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret == -1) { perror("sendto"); exit(1); }
+	int ret;
+	const char* myAddr = "127.0.0.1";
+
+	addr.sin_family = AF_INET;
+	ret = inet_aton(myAddr, &addr.sin_addr);
+	if (ret == 0) {
+		perror("inet_aton");
+		exit(1);
+	}
+	addr.sin_port = htons(32001);
+	//buf = "Hello UDP";
+	s = socket(PF_INET, SOCK_DGRAM, 0);
+	if (s == -1) {
+		perror("socket");
+		exit(1);
+	}
 }
 
 /***************************************************************************************/
 
+void RF24Gateway::sendUDP(uint8_t nodeID,RF24NetworkFrame frame) {
 
+	uint8_t buffer[MAX_PAYLOAD_SIZE+11];
 
+	memcpy(&buffer[0], &nodeID,1);
+	memcpy(&buffer[1],&frame.header,8);
+	memcpy(&buffer[9],&frame.message_size,2);
+	memcpy(&buffer[11],&frame.message_buffer,frame.message_size);
 
+	int ret = sendto(s, &buffer, frame.message_size+11, 0, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret == -1) {
+		perror("sendto");
+		exit(1);
+	}
+}
 
-
-
-
-
-
-
+/***************************************************************************************/
