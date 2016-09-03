@@ -1,0 +1,15 @@
+# .gitignore
+#
+# For RF24Gateway
+#
+
+## ignore object files ##
+*.o
+
+## ignore all of our built binaries ##
+librf24gateway.so.1.0
+examples/RF24GatewayNode
+examples/addons/Sniffer/Sniffer
+examples/gwNodeInt/RF24GatewayNodeInt
+examples/ncurses/RF24Gateway_ncurses
+examples/ncursesInt/RF24Gateway_ncursesInt
