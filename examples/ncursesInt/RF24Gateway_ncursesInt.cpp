@@ -8,7 +8,7 @@
  * c: RF24Network/Radio information <br>
  * d: Active IP connections (optional) <br>
  *
- * **Requirements: NCurses** 
+ * **Requirements: NCurses**
  * Install NCurses: apt-get install libncurses5-dev
  *
  * **Controls**
@@ -19,7 +19,7 @@
 
 #include <RF24/RF24.h>
 #include <RF24Network/RF24Network.h>
-#include <RF24Mesh/RF24Mesh.h>  
+#include <RF24Mesh/RF24Mesh.h>
 #include <RF24Gateway/RF24Gateway.h>
 
 #include <arpa/inet.h>
@@ -50,7 +50,7 @@ RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 RF24Gateway gw(radio,network,mesh);
 
-uint8_t nodeID = 0;
+uint8_t nodeID = 129;
 int interruptPin = 23;
 /******************************************************************************/
 
@@ -201,50 +201,51 @@ int main() {
 					time(&mTime);
 					struct tm* tm = localtime(&mTime);
 
-        myTime.hr = tm->tm_hour;
-        myTime.min = tm->tm_min;
-        RF24NetworkHeader hdr(header.from_node,1); 
-        network.write(hdr,&myTime,sizeof(myTime));
+					myTime.hr = tm->tm_hour;
+					myTime.min = tm->tm_min;
+					RF24NetworkHeader hdr(header.from_node,1);
+					network.write(hdr,&myTime,sizeof(myTime));
 
-   	  }
-      network.read(header,&buf,size);
-	}
-    rfInterrupts();
-  }else{
-      delay(100); //Big delay if connection to RF24Mesh is failing
-  }
-  /** Mesh address/id printout **/
-  /*******************************/
-    if(millis() - meshInfoTimer > updateRate){
+				}
+				network.read(header,&buf,size);
+			}
+			rfInterrupts();
+		} else {
+			delay(100); // Big delay if connection to RF24Mesh is failing
+		}
 
-	  getmaxyx(win,maxX,maxY);
+		/******************************/
+		/** Mesh address/id printout **/
+		/******************************/
+		if(millis() - meshInfoTimer > updateRate) {
+			getmaxyx(win,maxX,maxY);
 
-	  // Draw the pads on screen
-      drawDevPad();
+			// Draw the pads on screen
+			drawDevPad();
 	  prefresh(devPad,0,0, 4,1, 15,25);
-	  
-      drawMeshPad(); 
+
+      drawMeshPad();
 	  wscrl(meshPad,meshScroll);
 	  prefresh(meshPad,0,0, 4,26, 15,47);
-	  
+
 	  drawRF24Pad();
 	  prefresh(rf24Pad,0,0, 4,51, 15, 73);
-	  
+
 	  if(showConnPad){
 	    drawConnPad();
 	    wscrl(connPad,connScroll);
 	    prefresh(connPad,0,0, 15,1, maxX-1,maxY-2);
       }
 	} //MeshInfo Timer
-   
-   
+
+
   /** Handle keyboard input **/
   /*******************************/
     int myChar = getch();
-    
-    if(myChar > -1){
+
+    if(myChar > -1) {
       //cout << myChar << endl;
-	  switch(myChar){
+	  switch(myChar) {
 	    // a: En/Disable display of active connections
 	    case 'a' : showConnPad = !showConnPad; if(!showConnPad){ wclear(connPad); prefresh(connPad,0,0, 15,1, maxX-1,maxY-2); drawMain();} break;
 		// w: Increase frame-rate of curses display
@@ -263,67 +264,62 @@ int main() {
 		case 'Q': clear(); endwin(); return 0; break;
         meshScroll = std::max(meshScroll,0);
         connScroll = std::max(connScroll,0);
-        meshInfoTimer = 0;
-	  }
+				meshInfoTimer = 0;
+			}
+		}
+	} // while 1
 
-	
-	}
- }//while 1
+	//delwin(meshPad);
+	//delwin(connPad);
+	clear();
+	endwin();
+	return 0;
 
-
- //delwin(meshPad);
- //delwin(connPad);
- clear();
- endwin();
- return 0;
- 
-}//main
+} // main
 
 
 
 /******************************************************************/ 
 /******************Main Drawing Functions**************************/  
 
-void drawMain(){
+void drawMain() {
 
-  clear();
+	clear();
 
-  attron(COLOR_PAIR(1));
-  wprintw(win,"RF24Gateway Ncurses Interface by TMRh20 - 2015\n");  
-  whline(win,ACS_HLINE, maxY-2);
-  attroff(COLOR_PAIR(1));
-  refresh();
-  /** Display Network Interface Info **/
-  /*******************************/
+	attron(COLOR_PAIR(1));
+	wprintw(win,"RF24Gateway Ncurses Interface by TMRh20 - 2015\n");  
+	whline(win,ACS_HLINE, maxY-2);
+	attroff(COLOR_PAIR(1));
+	refresh();
 
+	/************************************/
+	/** Display Network Interface Info **/
+	/************************************/
 
-  
-  //Interface Information
-  struct ifaddrs *ifap, *ifa;
-  int family,s,n;
-  char host[NI_MAXHOST];
+	// Interface Information
+	struct ifaddrs *ifap, *ifa;
+	int family,s,n;
+	char host[NI_MAXHOST];
 
-retryIF:  
-  
-  getifaddrs (&ifap);
-  for (ifa = ifap, n=0; ifa != NULL; ifa = ifa->ifa_next, n++) {  
-		if ( tunStr.compare(ifa->ifa_name) != 0 || ifa->ifa_addr == NULL){
-			
-			if(ifa->ifa_next == NULL ){
-                drawCfg(0);
-				goto retryIF;
-			}else{
-			  continue;
+	retryIF:
+		getifaddrs (&ifap);
+		for (ifa = ifap, n=0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+			if ( tunStr.compare(ifa->ifa_name) != 0 || ifa->ifa_addr == NULL) {
+				if(ifa->ifa_next == NULL ) {
+					drawCfg(0);
+					goto retryIF;
+				} else {
+					continue;
+				}
 			}
-		}		
-		mvwprintw(win,2,0,"%8s ", ifa->ifa_name);
-		
-		family = ifa->ifa_addr->sa_family;
-	    
-		//This is an IP interface, display the IP
-		if (family == AF_INET || family == AF_INET6) {
-		    s = getnameinfo(ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-			if (s == 0) {
+			mvwprintw(win,2,0,"%8s ", ifa->ifa_name);
+
+			family = ifa->ifa_addr->sa_family;
+
+			// This is an IP interface, display the IP
+			if (family == AF_INET || family == AF_INET6) {
+				s = getnameinfo(ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+				if (s == 0) {
 			  wprintw(win,"IP: %s\n", host);
 			  std::string str1 = host;
 			  unsigned found = str1.find_last_of(".");
