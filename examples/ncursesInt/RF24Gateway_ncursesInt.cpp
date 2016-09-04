@@ -50,7 +50,7 @@ RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 RF24Gateway gw(radio,network,mesh);
 
-uint8_t nodeID = 129;
+uint8_t nodeID = 0;
 int interruptPin = 23;
 /******************************************************************************/
 
