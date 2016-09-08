@@ -22,26 +22,12 @@ LIBNAME_RFN=$(LIB_RFN).so.1.0
 
 HEADER_DIR=${PREFIX}/include/RF24Gateway
 
-ARCH=armv6zk
+# Assuming Raspberry Pi (original) / Raspberry Pi Zero
+CCFLAGS=-O2 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -std=c++0x
+# -- Check for Raspberry Pi 2+ --
 ifeq "$(shell uname -m)" "armv7l"
-ARCH=armv7-a
-endif
-
-# Detect the Raspberry Pi from cpuinfo
-#Count the matches for BCM2708 or BCM2709 in cpuinfo
-RPI=$(shell cat /proc/cpuinfo | grep Hardware | grep -c BCM2708)
-ifneq "${RPI}" "1"
-RPI=$(shell cat /proc/cpuinfo | grep Hardware | grep -c BCM2709)
-endif
-
-CCFLAGS=-std=c++0x
-
-ifeq "$(RPI)" "1"
-# CCFLAGS for Raspberry Pi (Original)/Zero
-CCFLAGS+=-O2 -march=$(ARCH) -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
-else
-# CCFLAGS for Raspberry Pi 2/3
-CCFLAGS+=-O2 -march=$(ARCH) -mfpu=neon-vfpv4 -mfloat-abi=hard
+# Set $CCFLAGS for Raspberry Pi 2+
+CCFLAGS=-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -O2 -pthread -pipe -fstack-protector --param=ssp-buffer-size=4 -std=c++0x
 endif
 
 # make all
