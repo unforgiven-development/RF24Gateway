@@ -39,4 +39,8 @@ install: all
 	  install -m 0755 $$prog $(prefix)/bin; \
 	done
 
+# simple debug function
+print-%:
+	@echo $*=$($*)
+
 .PHONY: install
