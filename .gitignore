@@ -1,10 +1,12 @@
-# .gitignore
+# RF24Gateway -- .gitignore
 #
-# For RF24Gateway
+# gitignore configuration for RF24Gateway project
 #
 
 ## ignore object files ##
 *.o
+*.so
+*.so.*
 
 ## ignore all of our built binaries ##
 librf24gateway.so.1.0

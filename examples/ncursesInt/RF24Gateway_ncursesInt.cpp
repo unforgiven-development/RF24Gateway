@@ -71,7 +71,7 @@ void drawMeshPad(void);
 void drawConnPad(void);
 void drawRF24Pad(void);
 
-int maxX,maxY;
+int maxX, maxY;
 int padSelection = 0;
 int meshScroll = 0;
 int connScroll = 0;
@@ -159,20 +159,21 @@ int main() {
 
 	while(1) {
 		// test mesh connectivity every 30 seconds
-		if(millis()-mesh_timer > 30000 && mesh.getNodeID()) {
-			if( ! mesh.checkConnection() ) {
-				wclear(renewPad);
-				mvwprintw(renewPad,0,0,"*Renewing Address*");
-				prefresh(renewPad,0,0, 3,26, 4, 55);
-				radio.maskIRQ(1,1,1); //Use polling only for address renewal       
-				if( (ok = mesh.renewAddress()) ) {
-					wclear(renewPad);
-					prefresh(renewPad,0,0, 3,26, 4, 55);
-				}
-				radio.maskIRQ(1,1,0);
-			}
-		mesh_timer = millis();
-		}
+		if(millis() - mesh_timer > 30000 && mesh.getNodeID()) {
+			if(!mesh.checkConnection()) {
+        wclear(renewPad);
+				mvwprintw(renewPad, 0, 0, "*Renewing Address*");
+				prefresh(renewPad, 0, 0, 3, 26, 4, 55);
+				radio.maskIRQ(1, 1, 1);   // Use polling only for address renewal       
+				if((ok = mesh.renewAddress())) {
+          wclear(renewPad);
+          prefresh(renewPad, 0, 0, 3, 26, 4, 55);
+        }
+				radio.maskIRQ(1, 1, 0);
+      }
+    mesh_timer = millis();
+    }
+
 		/*
 		 * The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
 		 * RF24Network user payloads are loaded into the user cache		
@@ -372,24 +373,24 @@ void drawCfg(bool isConf) {
 	timeout(30000);
 
 	sleep(1);
-	wattron(win,COLOR_PAIR(1));
-	mvwprintw(win,5,1, isConf ? "IP Configuration\n" : "**Interface Not Configured:**\n");
-	wattroff(win,COLOR_PAIR(1));
-	mvwprintw(win,6,1,"Enter IP Address: \n");
+	wattron(win, COLOR_PAIR(1));
+	mvwprintw(win, 5, 1, isConf ? "IP Configuration\n" : "**Interface Not Configured:**\n");
+	wattroff(win, COLOR_PAIR(1));
+	mvwprintw(win, 6, 1, "Enter IP Address: \n");
 	refresh();
 	
-	char ip[20],mask[20];
-	mvgetstr(6,19,ip);
+	char ip[20], mask[20];
+	mvgetstr(6, 19, ip);
 	
-	mvwprintw(win,7,1,"Enter Subnet Mask: \n");
+	mvwprintw(win, 7, 1, "Enter Subnet Mask: \n");
 	refresh();
 	
-	mvgetstr(7,20,mask);
+	mvgetstr(7, 20, mask);
 	
 	if(strlen(ip) >= 6 && strlen(mask) >= 7) {
-		gw.setIP(ip,mask);
+		gw.setIP(ip, mask);
 	} else {
-		mvwprintw(win,8,1,"Unable to set IP/Subnet \n");
+		mvwprintw(win, 8, 1, "Unable to set IP/Subnet \n");
 		refresh();
 		sleep(3);
 	}
@@ -514,53 +515,47 @@ void drawRF24Pad(){
 
 }
 
-/******************************************************************/
+/******************************************************************************/
 
-void drawConnPad(){
+void drawConnPad() {
+  int ctr = 2;
+  size_t lCtr = 1;
+  std::string line;
+  wclear(connPad);
+  //box(connPad,ACS_VLINE,ACS_HLINE);
 
-	int ctr = 2;
-	 size_t lCtr = 1;
-	std::string line;
-	 wclear(connPad);
-     //box(connPad,ACS_VLINE,ACS_HLINE);
-	 
-	 	 
-	 std::ifstream inFile;
-	 inFile.open("/proc/net/nf_conntrack");
-     while(inFile.good()){
-      getline(inFile,line); // get line from file
-       // search
-      if(line.find(subIP) != std::string::npos ) {
+  std::ifstream inFile;
+  inFile.open("/proc/net/nf_conntrack");
+  while(inFile.good()) {
+    getline(inFile,line); // get line from file
+    // search
+    if(line.find(subIP) != std::string::npos) {
+      std::string src = "src";
+      unsigned fnd = line.find(src); 
+      fnd = line.find_last_of("0123456789",fnd-2);
+      fnd = line.find_last_of(" ",fnd-2);
+      unsigned findEnd = line.find(" mark=");
+      line = line.substr(fnd,findEnd-fnd);
+      mvwprintw(connPad,ctr++,0,"%d %s\n",lCtr++,line.c_str());
 
-	    std::string src = "src";
-	    unsigned fnd = line.find(src); 
-		fnd = line.find_last_of("0123456789",fnd-2);
-		fnd = line.find_last_of(" ",fnd-2);
-		unsigned findEnd = line.find(" mark=");
-		line = line.substr(fnd,findEnd-fnd);
-		mvwprintw(connPad,ctr++,0,"%d %s\n",lCtr++,line.c_str());
-		
-		if(ctr > maxX-15){
-          break;
-		}
+      if(ctr > maxX - 15) {
+        break;
       }
-     }
-	 
-	 inFile.close();
-	 
-	if(padSelection == 2){
-	   wattron(connPad,COLOR_PAIR(1));
-	   mvwhline(connPad,connScroll,0,ACS_HLINE, maxY);
-	   wattroff(connPad,COLOR_PAIR(1));
-	   mvwprintw(connPad,connScroll,5," Active IP Connections: ");
-	 }else{
-	   wattroff(connPad,COLOR_PAIR(1));
-	   mvwhline(connPad,connScroll,0,ACS_HLINE, maxY);
-	   mvwprintw(connPad,connScroll,5," Active IP Connections: ");
-	 }
+    }
+  }
 
+  inFile.close();
+
+  if(padSelection == 2) {
+    wattron(connPad, COLOR_PAIR(1));
+    mvwhline(connPad, connScroll,0, ACS_HLINE, maxY);
+    wattroff(connPad, COLOR_PAIR(1));
+    mvwprintw(connPad, connScroll, 5, " Active IP Connections: ");
+  } else {
+    wattroff(connPad, COLOR_PAIR(1));
+    mvwhline(connPad, connScroll, 0, ACS_HLINE, maxY);
+    mvwprintw(connPad, connScroll, 5, " Active IP Connections: ");
+  }
 }
 
-/******************************************************************/
-
-
+/******************************************************************************/

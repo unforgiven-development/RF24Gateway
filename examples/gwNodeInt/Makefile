@@ -32,7 +32,7 @@ ${PROGRAMS}: ${SOURCES}
 clean:
 	rm -rf $(PROGRAMS)
 
-install: all
+install:
 	test -d $(prefix) || mkdir $(prefix)
 	test -d $(prefix)/bin || mkdir $(prefix)/bin
 	for prog in $(PROGRAMS); do \

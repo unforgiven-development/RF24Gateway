@@ -1,6 +1,8 @@
-#############################################################################
+################################################################################
 #
-# Makefile for RF24Mesh on Raspberry Pi
+# Makefile for RF24Gateway on Linux platforms
+#
+# NOTE: Currently, the primary target platform is the Raspberry Pi series
 #
 # Author:  TMRh20 
 # Date:    2014/09 

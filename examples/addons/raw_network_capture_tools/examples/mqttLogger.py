@@ -1,8 +1,24 @@
-# Note: This code requires paho-mqtt
-# sudo pip-install paho-mqtt
-
-# Simple MQTT data logger, listens for UDP output from RF24Gateway & logs to an MQTT topic
-# For use with RF24Mesh nodes that are not able to communicate directly via TCP/IP etc
+# RF24Gateway -- examples/addons/mqttLogger.py
+#
+# (c) 2016 Gerad Munsch <gmunsch@unforgivendevelopment.com>
+# (c) 2016 TMRh20
+#
+# DESCRIPTION:
+# This example is a simple, MQTT-based data logger. It listens on localhost for
+# UDP output from RF24Gateway, and logs that received data to an MQTT topic.
+# It is especially useful for RF24Mesh nodes which are unable to communicate in
+# a direct manner, with standard protocols, such as TCP/IP.
+#
+# PREREQUISITES:
+# This code requires paho-mqtt (a Python library for MQTT)
+#
+# The "universal" method for installation is as such:
+# # sudo pip-install paho-mqtt
+#
+# However, many distributions may provide their own, pre-packaged binaries, able
+# to be installed with the system package manager.
+#
+# USAGE:
 # See RF24Gateway examples: 
 #                            RF24NetworkFrame frame = RF24NetworkFrame(header,buf,size); 
 #                            gw.sendUDP(mesh.getNodeID(header.from_node),frame);
