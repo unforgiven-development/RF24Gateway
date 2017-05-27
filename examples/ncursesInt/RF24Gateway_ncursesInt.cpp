@@ -157,26 +157,26 @@ int main() {
 	/***********************LOOP***************************************/
 	bool ok = true;
 
-	while(1) {
+	while (1) {
 		// test mesh connectivity every 30 seconds
-		if(millis() - mesh_timer > 30000 && mesh.getNodeID()) {
-			if(!mesh.checkConnection()) {
-        wclear(renewPad);
+		if (millis() - mesh_timer > 30000 && mesh.getNodeID()) {
+			if (!mesh.checkConnection()) {
+				wclear(renewPad);
 				mvwprintw(renewPad, 0, 0, "*Renewing Address*");
 				prefresh(renewPad, 0, 0, 3, 26, 4, 55);
-				radio.maskIRQ(1, 1, 1);   // Use polling only for address renewal       
-				if((ok = mesh.renewAddress())) {
-          wclear(renewPad);
-          prefresh(renewPad, 0, 0, 3, 26, 4, 55);
-        }
+				radio.maskIRQ(1, 1, 1);   // Use polling only for address renewal
+				if ((ok = mesh.renewAddress())) {
+					wclear(renewPad);
+					prefresh(renewPad, 0, 0, 3, 26, 4, 55);
+				}
 				radio.maskIRQ(1, 1, 0);
-      }
-    mesh_timer = millis();
-    }
+			}
+		mesh_timer = millis();
+		}
 
 		/*
 		 * The gateway handles all IP traffic (marked as EXTERNAL_DATA_TYPE) and passes it to the associated network interface
-		 * RF24Network user payloads are loaded into the user cache		
+		 * RF24Network user payloads are loaded into the user cache
 		 */
 		gw.poll(10);
 
@@ -280,15 +280,15 @@ int main() {
 
 
 
-/******************************************************************/ 
-/******************Main Drawing Functions**************************/  
+/******************************************************************/
+/******************Main Drawing Functions**************************/
 
 void drawMain() {
 
 	clear();
 
 	attron(COLOR_PAIR(1));
-	wprintw(win,"RF24Gateway Ncurses Interface by TMRh20 - 2015\n");  
+	wprintw(win,"RF24Gateway Ncurses Interface by TMRh20 - 2015\n");
 	whline(win,ACS_HLINE, maxY-2);
 	attroff(COLOR_PAIR(1));
 	refresh();
@@ -329,9 +329,9 @@ void drawMain() {
 			}
 		}
   }
-  
+
   mvwhline(win,15,1,ACS_HLINE, maxY-2);
-  
+
 refresh();
 
 }
@@ -378,15 +378,15 @@ void drawCfg(bool isConf) {
 	wattroff(win, COLOR_PAIR(1));
 	mvwprintw(win, 6, 1, "Enter IP Address: \n");
 	refresh();
-	
+
 	char ip[20], mask[20];
 	mvgetstr(6, 19, ip);
-	
+
 	mvwprintw(win, 7, 1, "Enter Subnet Mask: \n");
 	refresh();
-	
+
 	mvgetstr(7, 20, mask);
-	
+
 	if(strlen(ip) >= 6 && strlen(mask) >= 7) {
 		gw.setIP(ip, mask);
 	} else {
@@ -403,49 +403,49 @@ void drawCfg(bool isConf) {
 }
 
 
-/******************************************************************/ 
-/******************Curses Pad Functions****************************/  
+/******************************************************************/
+/******************Curses Pad Functions****************************/
 
 void drawDevPad() {
 
 
       wclear(devPad);
-	  
+
 	  std::string line;
       std::ifstream inFile;
 	  inFile.open("/proc/net/dev");
       while(inFile.good()){
         getline(inFile,line); // get line from file
-        // search		 
-        if(line.find(tunStr) != std::string::npos ) {	
+        // search
+        if(line.find(tunStr) != std::string::npos ) {
 
 		  char txBytes[20], txPackets[20], txErrs[20];
 		  char rxBytes[20], rxPackets[20], rxErrs[20];
 		  char dummy[20];
-		  
+
 		  whline(devPad,ACS_HLINE, 20);
 		  mvwprintw(devPad,0,3," IF Stats: ");
-		  
+
 		  sscanf(line.c_str(), "%s %s %s %s %s %s %s %s %s %s %s %s", dummy, rxBytes,rxPackets,rxErrs,dummy,dummy,dummy,dummy,dummy, txBytes,txPackets,txErrs);
-		  
+
 		  mvwprintw(devPad,1,0,"RX Bytes %s\nRX Packets %s\nRX Errs %s\nTX Bytes %s\nTX Packets %s\nTX Errs %s\n",rxBytes,rxPackets,rxErrs,txBytes,txPackets,txErrs);
-		  
+
 		  float bytesRNow = strtof (rxBytes,NULL) - bRX;
 		  float bytesTNow = strtof (txBytes,NULL) - bTX;
-		  
+
 		  float RKBS = bytesRNow > 0 ? bytesRNow/updateRate : 0.0 ;
 		  float TKBS = bytesRNow > 0 ? bytesTNow/updateRate : 0.0 ;
-		  
+
 		  wprintw(devPad,"\nRX %.03f KB/s\n",RKBS);
 		  wprintw(devPad,"TX %.03f KB/s\n",TKBS);
-		  
+
 		  bRX = strtol (rxBytes,NULL,10);
-		  bTX = strtol (txBytes,NULL,10);  
-		    
+		  bTX = strtol (txBytes,NULL,10);
+
 	    }
       }
 	 inFile.close();
-	 
+
 }
 
 /******************************************************************/
@@ -475,7 +475,7 @@ void drawMeshPad() {
 /******************************************************************/
 
 void drawRF24Pad(){
-  
+
    wclear(rf24Pad);
    mvwprintw(rf24Pad,1,0,"Address: 0%o\n",mesh.mesh_address);
    wprintw(rf24Pad,"nodeID: %d\n",mesh.getNodeID());
@@ -484,7 +484,7 @@ void drawRF24Pad(){
    int dr = radio.getDataRate();
    int pa = radio.getPALevel();
    rfInterrupts();
-   wprintw(rf24Pad,"Data-Rate: %s\n", dr == 0 ? "1MBPS" : dr == 1 ? "2MBPS" : dr == 2 ? "250KBPS" : "ERROR" ); 
+   wprintw(rf24Pad,"Data-Rate: %s\n", dr == 0 ? "1MBPS" : dr == 1 ? "2MBPS" : dr == 2 ? "250KBPS" : "ERROR" );
    wprintw(rf24Pad,"PA Level: %s\n", pa == 0 ? "MIN" : pa == 1 ? "LOW" : pa == 2 ? "HIGH" : pa == 3 ? "MAX" : "ERROR" );
    wprintw(rf24Pad,"IF Type: %s\n", gw.config_TUN == 1 ? "TUN" : "TAP" );
    wprintw(rf24Pad,"IF Drops: %u\n", gw.ifDropped() );
@@ -500,7 +500,7 @@ void drawRF24Pad(){
       gw.fifoCleared=false;
    }
    wprintw(rf24Pad,"Interrupt Errors: %u",fifoClears);
-   
+
    if(padSelection == 1){
 	 wattron(rf24Pad,COLOR_PAIR(1));
 	   mvwhline(rf24Pad,rf24Scroll,0,ACS_HLINE, maxY);
@@ -510,7 +510,7 @@ void drawRF24Pad(){
 	   wattroff(rf24Pad,COLOR_PAIR(1));
 	   mvwhline(rf24Pad,rf24Scroll,0,ACS_HLINE, maxY);
 	   mvwprintw(rf24Pad,rf24Scroll,3," RF24Network Info: ");
-	   
+
 	}
 
 }
@@ -531,7 +531,7 @@ void drawConnPad() {
     // search
     if(line.find(subIP) != std::string::npos) {
       std::string src = "src";
-      unsigned fnd = line.find(src); 
+      unsigned fnd = line.find(src);
       fnd = line.find_last_of("0123456789",fnd-2);
       fnd = line.find_last_of(" ",fnd-2);
       unsigned findEnd = line.find(" mark=");
